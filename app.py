@@ -25,10 +25,40 @@ columnas = ["datetime", "Estacion N","Clima N","temp","humidity","count"]
 st.dataframe(df[columnas].head(10), use_container_width=True)
 
 with Exploracion:
-    st.header("Exploracion")
-    st.write("Esta es la seccion de exloracion de datos.")
+    st.header("Exploracion de los datos")
+    st.write("Selecciona algunos filtros yobservamos como ocurren los cambios")
+
+    Estacion = st.selectbox("Selecciona la estacion",["Todas"]+ list(df["Estacion N"].unique()))
+    Clima = st.selectbox("Selecciona el clima",["Todos"] + list(df["Clima N"].unique()))
+    ano = st.selectbox("Selecciona el Ano",["Todos"] + list(df["Ano"].unique()))
+    Mes =  st.selectbox("Selecciona el mes",["Todos"] + ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"])
+
+    filtrado = filtrar_datos(df,Estacion, Clima, ano, Mes)
+    st.info(f"Se han filtrado {len(filtrado):,} registros.")
+
+    columnas = ["datetime", "Estacion N", "Clima N", "temp", "humidity","count"]
+    st.dataframe(filtrado[columnas], use_container_width=True, height=350)
+
+    if st.checkbox("Mostrar resumen estadistico"):
+        st.dataframe(filtrado[["temp", "humidity", "windspeed", "count"]].describe().round(2), use_container_width=True)
+
+    if st.checkbox("Mostrar datos faltantes"):
+        st.dataframe(filtrado.isnull().sum().to_frame(name="Faltantes"), use_container_width=True)
+
 
 
 with Analisis:
-    st.header("Analisis")
-    st.write("Esta es la seccion de analisis de datos.")    
+    st.header("Análisis descriptivo")
+    st.write("Aquí solo visualizamos cómo se distribuyen las rentas de bicicletas en diferentes categorías.")
+
+    opcion = st.selectbox("¿Qué desea analizar?", ["Rentas por mes", "Rentas por hora", "Rentas por estación", "Rentas según el clima"])
+
+    datos_grafico, tipo = preparar_analisis(df, opcion)
+
+    st.subheader(opcion)
+    if tipo == "linea":
+        st.line_chart(datos_grafico)
+    else:
+        st.bar_chart(datos_grafico)
+
+    st.dataframe(datos_grafico, use_container_width=True)
